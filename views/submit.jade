@@ -1,0 +1,11 @@
+h1= title
+p Submit your #{type} to Hailstorm.
+
+form(method="post")
+    p
+        input(type="text", name="title", placeholder="Title for your #{type}")
+        input(type="hidden", name="type", value="#{type}")
+    p
+        textarea(name="body", placeholder="What's your #{type}?")
+    p
+        input(type="submit", value="Submit")
