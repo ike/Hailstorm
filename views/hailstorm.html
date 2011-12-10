@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Hailstorm</title>
+
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+		}
+
+		a {
+			color: #634278;
+		}
+
+		a:hover {
+			color: #B3CB48;
+		}
+
+		#header {
+			padding: 7px;
+			background-color: #634278;
+			font-family: serif;
+		}
+
+		#header h1, #header h2 {
+			display: inline;
+			color: #F2F2F3;
+		}
+
+		#content {
+			margin: 5px;
+		}
+
+
+
+
+
+
+
+		#submit {
+			padding-bottom: 5px;
+			margin-bottom: 15px;
+			border-bottom: 1px #ddd solid;
+		}
+
+		#idea-form {
+			width: 100%;
+			margin: 0 auto;
+		}
+
+		#idea-box {
+			border: 1px solid #CCC;
+			border-radius: 4px;
+			-moz-border-radius: 4px;
+			-webkit-border-radius: 4px;
+			padding: 8px;
+			-webkit-box-shadow: 0 1px #fff;
+			-moz-box-shadow: 0 1px #fff;
+			box-shadow: 0 1px #fff;
+			width: 80%;
+			height: 19px;
+			color: #222;
+			font: 14px/18px "Helvetica Neue",Arial,sans-serif;
+			outline: none;
+			overflow-x: hidden;
+			overflow-y: auto;
+			white-space: pre-wrap;
+			word-wrap: break-word;
+		}
+
+		#idea-box-submit {
+			border: 1px solid #CCC;
+			border-radius: 4px;
+			-moz-border-radius: 4px;
+			-webkit-border-radius: 4px;
+			padding: 8px;
+			-webkit-box-shadow: 0 1px #fff;
+			-moz-box-shadow: 0 1px #fff;
+			box-shadow: 0 1px #fff;
+			height: 36px;
+			width: 16%;
+			color: #222;
+			font: 14px/18px "Helvetica Neue",Arial,sans-serif;
+			outline: none;
+			overflow-x: hidden;
+			overflow-y: auto;
+			white-space: pre-wrap;
+			word-wrap: break-word;
+			float: right;
+			background-color: #B3CB48;
+		}
+
+		#idea-box-submit:hover {
+			background-color: #697A20;
+			color: #F2F2F3;
+		}
+
+		#idea-box-submit:active {
+			background-color: #697F50;
+			color: #F2F2F3;
+		}
+
+		#idea-box-submit:focus {
+			border: 1px solid #634278;
+		}
+
+
+
+
+
+
+		.idea {
+			border: 1px solid #CCC;	
+			border-radius: 4px;
+			-moz-border-radius: 4px;
+			-webkit-border-radius: 4px;
+			min-height: 70px;
+			position: relative;
+			padding-bottom: 30px;
+			margin-bottom: 15px;
+		}
+
+		.idea-body {
+			font-family: serif;
+			font-size: 1.5em;
+			padding-top: 5px;
+		}
+
+		.idea-meta {
+			position: absolute;
+			bottom: 0;
+			right: 0;
+			padding: 3;
+			color: #fff;
+			background-color: #333;
+		}
+
+		.idea-vote-button {
+			width: 75px;
+			height: 100px;
+			float: left;
+			background-image: url('../images/vote.png');
+			background-position: 0px 0px;
+			margin-right: 10px;
+		}
+
+		.idea-vote-button:hover {
+			background-position: 150px 0px;
+		}
+
+		.idea-vote-button:active {
+			background-position: 75px 0px;
+		}
+
+		.idea-vote-button .voted {
+			background-position: 75px 0px;
+		}
+
+
+
+
+		#footer {
+			margin: 5px;
+			margin-top: 15px;
+			border-top: 1px #ddd solid;
+		}
+
+
+		@media (min-width: 600px) {
+			body {
+				width: 600px;
+				margin: 0 auto;
+			}
+		}
+
+	</style>
+
+<script src="/javascripts/jquery.js"></script>
+
+</head>
+<body>
+	<div id="container">
+
+		<div id="header">
+			<h1>Hailstorm</h1>
+		</div>
+
+		<div id="content">
+
+			<div id="submit">
+				<h1>What's your idea?</h1>
+				<div id="idea-form">
+					<form action="/" method="POST">
+						<textarea name="idea-box" id="idea-box" placeholder="Build a better mousetrap..." autofocus ></textarea>
+						<input type="submit" id="idea-box-submit" value="Share"/> 
+					</form>
+				</div>
+			</div>
+
+			<div id="ideas">
+				<!--
+				<div class="idea">
+					<div class="idea-vote-button">
+					</div>	
+					<div class="idea-body">
+						<p>Moodle single sign-on. This is a longer text than usual... we'll see how it wraps. If it is nice, we're spiced!</p>
+					</div>
+					<div class="idea-footer">
+						<div class="idea-meta">
+							<pre>17 votes</pre>
+						</div>
+					</div>
+				</div>
+				-->
+			</div>
+
+		</div>
+
+		<div id="footer">
+			<p style="float: left; display: inline;">Written by <a href="">Isaac</a> from <a href="">ITS</a></p>
+			<p style="float: right; display: inline;">Code on <a href="http://github.com/Crossdiver/Hailstorm">GitHub</a></p>
+		</div>
+
+	</div> <!-- #container -->
+
+<script type="text/javascript">
+	var ideasArray = [];
+
+	$.getJSON('/top', function(data) {
+
+		$.each(data['ideas'], function(i, idea) {
+			ideasArray.push('<div class="idea"><div class="idea-vote-button"></div><div class="idea-body"><p>' + idea['body'] + '</p></div><div class="idea-footer"><div class="idea-meta"><pre>' + idea['votes'] + ' votes</pre></div></div></div>');
+
+			$('#ideas').html(ideasArray.join(''));
+		});
+
+	});
+
+</script>
+</body>
+</html>

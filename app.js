@@ -1,22 +1,35 @@
+
 /**
  * Module dependencies.
  */
 
 var express = require('express')
-  , routes = require('./routes')
-  , db = require('riak-js').getClient();
+var db = require('riak-js').getClient();
 
 var app = module.exports = express.createServer();
 
 // Configuration
 
 app.configure(function(){
-  app.set('views', __dirname + '/views');
-  app.set('view engine', 'jade');
-  app.use(express.bodyParser());
-  app.use(express.methodOverride());
-  app.use(app.router);
-  app.use(express.static(__dirname + '/public'));
+	app.set('views', __dirname + '/views');
+    app.set('views');
+	app.use(express.bodyParser());
+	app.use(express.methodOverride());
+	app.use(app.router);
+	app.use(express.static(__dirname + '/public'));
+
+	// disable layout
+	app.set("view options", {layout: false});
+
+	// make a custom html template
+	app.register('.html', {
+	compile: function(str, options){
+	  return function(locals){
+	    return str;
+	  };
+	}
+	});
+
 });
 
 app.configure('development', function(){
@@ -27,61 +40,40 @@ app.configure('production', function(){
   app.use(express.errorHandler()); 
 });
 
-// Routes
+// FUNCTIONs
 
-// Homepage: http://hugehailstorm.com/
+var saveIdeaToDB = function(idea){
+	date = new Date();
+	ideaKey = '' + date.getMonth() + date.getDate() + date.getYear() + date.getHours() + date.getMinutes() + date.getSeconds();
+	idea = JSON.stringify(idea);
+	db.save('ideas', ideaKey, idea);
+}
+
+var getTopIdeas = function() {
+	db.getAll('ideas', {where: {}})
+}
+
+// GETs
+
 app.get('/', function(req, res){
-	res.render('index', { title: 'Hailstorm'});
+	res.render('hailstorm.html');
+});
+
+app.get('/top', function(req, res){
+	res.contentType('json');
+	res.send({ ideas: [{ body:'This is my awesome idea.', votes: 12 }, { body:'Heres an idea!! Let\'s go to bed!!', votes: 122000 }, { body:'Yet another idea. so so so so so', votes: 5 }] });
 });
 
 
-// Get the form: http://hugehailstorm.com/submit/love
-app.get('/submit/:type', function(req, res){
-	if ((req.params.type == 'bug') || (req.params.type == 'love') || (req.params.type == 'idea')){
-		res.render('submit', { title: 'Submit', type: req.params.type });
-	} else {
-		res.render('whatsubmit', {title: 'Whatcha submitting?'});
-	}
-});
+// POSTs
 
-// Get any item: http://hugehailstorm.com/bug/this-is-a-bug-title
-app.get('/:type/:title', function(req, res){
-	var item = {
-		content: "",
-		date: "",
-		title: "",
-		urltitle: req.params.title,
-		type: req.params.type
+app.post('/', function(req, res){
+	var idea = {
+		body: req.body.ideaBody,
 	};
 
-	db.get(item.type, item.urltitle, function(err, data){
-		item.content = data.content;
-		item.date = data.date;
-		item.title = data.title;
-	});
-
-	res.render('item', { item: item });
-});
-
-// Post form: http://hugehailstorm.com/submit/bug
-app.post('/submit/:type', function(req, res){
-	type = req.body.type;
-	title = req.body.title;
-	body = req.body.body;
-	parsedtitle = title.replace(/\s+/g, '-').toLowerCase();
-	date = new Date();
-
-	if (db.exists(type, title)) title = title + '-' + date.getHours() + date.getMinutes();
-
-	console.log('something happened.');
-
-	db.save(type, parsedtitle, {title: title
-							,	 id: parsedtitle
-							,	 date: date
-							,	 content: body 
-						});
-
-    res.redirect('/' + type + '/' + parsedtitle);
+	saveIdeaToDB(idea);
+	res.redirect('/');
 });
 
 app.listen(3000);
