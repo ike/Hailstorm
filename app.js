@@ -4,9 +4,14 @@
  */
 
 var express = require('express')
-var db = require('riak-js').getClient();
-
 var app = module.exports = express.createServer();
+var sys = require('util');
+ 
+var Client = require('mysql').Client;
+var db = new Client();
+db.user = 'hailstorm';
+db.password = 'alcatraz';
+
 
 // Configuration
 
@@ -44,32 +49,108 @@ app.configure('production', function(){
 
 var saveIdeaToDB = function(idea){
 	date = new Date();
-	ideaKey = '' + date.getMonth() + date.getDate() + date.getYear() + date.getHours() + date.getMinutes() + date.getSeconds();
-	idea = JSON.stringify(idea);
-	db.save('ideas', ideaKey, idea);
+	db.query('USE hailstorm', function(error, results) {
+        if(error) {
+            console.log('ClientConnectionReady Error: ' + error.message);
+            db.end();
+            return;
+        }
+    });
+	db.query('INSERT INTO ideas SET idea_body=?, idea_date=?, idea_votes=?;'
+		,	[idea.body, idea.date, idea.votes]
+		,	function(error, results) {
+				if(error) {
+					console.log("ClientReady Error: " + error.message);
+					db.end();
+					return;
+				}
+				console.log('Inserted: ' + results.affectedRows + ' row.');
+				console.log('Id inserted: ' + results.insertId);
+			});
 }
 
-var getTopIdeas = function() {
-	db.getAll('ideas', {where: {}})
+function formatDate(date) {
+  return date.getFullYear() + '-' +
+    (date.getMonth() < 9 ? '0' : '') + (date.getMonth()+1) + '-' +
+    (date.getDate() < 10 ? '0' : '') + date.getDate() + ' ' + 
+    date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+}
+
+var topIdeas = function(res, numIdeas) {
+	db.query('USE hailstorm', function(error, results) {
+        if(error) {
+            console.log('ClientConnectionReady Error: ' + error.message);
+            db.end();
+            return;
+        }
+    });
+
+	ideas = db.query('SELECT * FROM ideas ORDER BY idea_votes desc, idea_date desc LIMIT 0, ' + numIdeas + ' ', function(err, results, fields){
+		if (err) {
+	      throw err;
+	    }
+
+	    sendJSON(res, results);
+	});
+}
+
+var hashtagIdeas = function(res, numIdeas, hashtag) {
+	db.query('USE hailstorm', function(error, results) {
+        if(error) {
+            console.log('ClientConnectionReady Error: ' + error.message);
+            db.end();
+            return;
+        }
+    });
+
+	ideas = db.query('SELECT * FROM ideas WHERE MATCH (idea_body) AGAINST ("' + hashtag + '") ORDER BY idea_votes desc, idea_date desc LIMIT 0, ' + numIdeas + ' ', function(err, results, fields){
+		if (err) {
+	      throw err;
+	    }
+
+	    sendJSON(res, results);
+	});
+}
+
+var sendJSON = function(res, results) {
+	var ideas = {ideas: results};
+	res.contentType('json');
+	res.send(ideas);
 }
 
 // GETs
 
 app.get('/', function(req, res){
-	res.render('hailstorm.html');
+	var numIdeas = req.query.numIdeas || 10;
+
+	if(req.query.o == 'JSON') {
+		topIdeas(res, numIdeas);
+	} else {
+		res.render('hailstorm.html');
+	}
 });
 
-app.get('/top', function(req, res){
-	res.contentType('json');
-	res.send({ ideas: [{ body:'This is my awesome idea.', votes: 12 }, { body:'Heres an idea!! Let\'s go to bed!!', votes: 122000 }, { body:'Yet another idea. so so so so so', votes: 5 }] });
+app.get('/tag/:hashtag', function(req, res){
+	var numIdeas = req.query.numIdeas || 10;
+
+	var hashtag = req.params.hashtag;
+
+	if(req.query.o == 'JSON') {
+		hashtagIdeas(res, numIdeas, hashtag);
+	} else {
+		res.render('hailstorm.html');
+	}
 });
 
 
 // POSTs
 
 app.post('/', function(req, res){
+	var d = new Date();
 	var idea = {
-		body: req.body.ideaBody,
+		body: req.body.idea_body,
+		date: formatDate(d),
+		votes: 0
 	};
 
 	saveIdeaToDB(idea);

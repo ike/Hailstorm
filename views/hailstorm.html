@@ -140,7 +140,7 @@
 			width: 75px;
 			height: 100px;
 			float: left;
-			background-image: url('../images/vote.png');
+			background-image: url('/images/vote.png');
 			background-position: 0px 0px;
 			margin-right: 10px;
 		}
@@ -192,7 +192,7 @@
 				<h1>What's your idea?</h1>
 				<div id="idea-form">
 					<form action="/" method="POST">
-						<textarea name="idea-box" id="idea-box" placeholder="Build a better mousetrap..." autofocus ></textarea>
+						<textarea name="idea_body" id="idea-box" placeholder="Build a better mousetrap..." autofocus ></textarea>
 						<input type="submit" id="idea-box-submit" value="Share"/> 
 					</form>
 				</div>
@@ -225,17 +225,20 @@
 	</div> <!-- #container -->
 
 <script type="text/javascript">
-	var ideasArray = [];
 
-	$.getJSON('/top', function(data) {
+var ideasArray = [];
+var numIdeas = 10;
 
-		$.each(data['ideas'], function(i, idea) {
-			ideasArray.push('<div class="idea"><div class="idea-vote-button"></div><div class="idea-body"><p>' + idea['body'] + '</p></div><div class="idea-footer"><div class="idea-meta"><pre>' + idea['votes'] + ' votes</pre></div></div></div>');
+$.getJSON(window.location.pathname + '?o=JSON', function(data) {
+	ideasArray = [];
+	$.each(data['ideas'], function(i, idea) {
+		ideasArray.push('<div class="idea" id="' + idea['id'] + '"><div class="idea-vote-button"></div><div class="idea-body"><p>' + idea['idea_body'] + '</p></div><div class="idea-footer"><div class="idea-meta"><pre>' + idea['idea_votes'] + ' votes</pre></div></div></div>');
 
-			$('#ideas').html(ideasArray.join(''));
-		});
-
+		$('#ideas').html(ideasArray.join(''));
 	});
+
+});
+
 
 </script>
 </body>
